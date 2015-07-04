@@ -8,13 +8,21 @@
 
 import UIKit
 import MobileCoreServices
+import CoreData
 
 class FeedViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
     @IBOutlet weak var collectionView: UICollectionView!
     
+    var feedArray: [AnyObject] = []
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        let request = NSFetchRequest(entityName: "FeedItem")
+        let appDelegate: AppDelegate = (UIApplication.sharedApplication().delegate as! AppDelegate)
+        let context: NSManagedObjectContext = appDelegate.managedObjectContext!
+        feedArray = context.executeFetchRequest(request, error: nil)!
 
         // Do any additional setup after loading the view.
     }
@@ -64,6 +72,29 @@ class FeedViewController: UIViewController, UICollectionViewDataSource, UICollec
         }
     }
     
+    //UIImagePickerControllerDelegate
+    
+    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [NSObject : AnyObject]) {
+        let image = info[UIImagePickerControllerOriginalImage] as! UIImage
+        
+        let imageData = UIImageJPEGRepresentation(image, 1.0)
+        
+        let managedObjectContext = (UIApplication.sharedApplication().delegate as! AppDelegate).managedObjectContext
+        let entityDescription = NSEntityDescription.entityForName("FeedItem", inManagedObjectContext: managedObjectContext!)
+        let feedItem = FeedItem(entity: entityDescription!, insertIntoManagedObjectContext: managedObjectContext!)
+        
+        feedItem.image = imageData
+        feedItem.caption = "Test Caption"
+        
+        (UIApplication.sharedApplication().delegate as! AppDelegate).saveContext()
+        
+        feedArray.append(feedItem)
+        
+        self.dismissViewControllerAnimated(true, completion: nil)
+        
+        self.collectionView.reloadData()
+    }
+    
     
     // UICollectionViewDataSource
     
@@ -72,10 +103,18 @@ class FeedViewController: UIViewController, UICollectionViewDataSource, UICollec
     }
     
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 1
+        return feedArray.count
     }
     
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        return UICollectionViewCell()
+        
+        var cell: FeedCell = collectionView.dequeueReusableCellWithReuseIdentifier("Cell", forIndexPath: indexPath) as! FeedCell
+        
+        let thisItem = feedArray[indexPath.row] as! FeedItem
+        
+        cell.imageView.image = UIImage(data: thisItem.image)
+        cell.captionLabel.text = thisItem.caption
+        
+        return cell
     }
 }
