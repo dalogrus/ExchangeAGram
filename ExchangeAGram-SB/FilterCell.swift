@@ -16,6 +16,7 @@ class FilterCell: UICollectionViewCell {
         super.init(frame: frame)
         
         imageView = UIImageView(frame: CGRect(x: 0, y: 0, width: frame.size.width, height: frame.size.height))
+        contentView.addSubview(imageView)
         
     }
 
